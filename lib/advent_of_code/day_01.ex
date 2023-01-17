@@ -1,3 +1,4 @@
+# Ignore day 1
 defmodule AdventOfCode.Day01 do
   def part1(_args) do
   end
