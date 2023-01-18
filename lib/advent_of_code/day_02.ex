@@ -2,15 +2,18 @@ defmodule AdventOfCode.Day02 do
   @rules %{
     rock: %{
       score: 1,
-      wins_against: :scissors
+      wins_against: :scissors,
+      loses_against: :paper
     },
     paper: %{
       score: 2,
-      wins_against: :rock
+      wins_against: :rock,
+      loses_against: :scissors
     },
     scissors: %{
       score: 3,
-      wins_against: :paper
+      wins_against: :paper,
+      loses_against: :rock
     }
   }
 
@@ -35,20 +38,38 @@ defmodule AdventOfCode.Day02 do
     hand_score(my_hand) + round_score(opponent_hand, my_hand)
   end
 
+  defp infer_my_hand(opponent_hand, result) do
+    case result do
+      :win ->
+        get_in(@rules, [opponent_hand, :loses_against])
+
+      :draw ->
+        opponent_hand
+
+      :lose ->
+        get_in(@rules, [opponent_hand, :wins_against])
+    end
+  end
+
   def part1(_args) do
-    Enum.map(AdventOfCode.Day02.Input.parsed_input(), fn {opponent_hand, my_hand} ->
-      calc_score(opponent_hand, my_hand)
-    end)
+    AdventOfCode.Day02.Input.parsed_input_part1()
+    |> Enum.map(fn {opponent_hand, my_hand} -> calc_score(opponent_hand, my_hand) end)
     |> Enum.sum()
   end
 
   def part2(_args) do
+    AdventOfCode.Day02.Input.parsed_input_part2()
+    |> Enum.map(fn {opponent_hand, desired_result} ->
+      calc_score(opponent_hand, infer_my_hand(opponent_hand, desired_result))
+    end)
+    |> Enum.sum()
   end
 end
 
 defmodule AdventOfCode.Day02.Input do
   @opponent_code %{"A" => :rock, "B" => :paper, "C" => :scissors}
   @my_code %{"X" => :rock, "Y" => :paper, "Z" => :scissors}
+  @result_code %{"X" => :lose, "Y" => :draw, "Z" => :win}
 
   @input "C Y
 C Y
@@ -2551,11 +2572,20 @@ B Y
 B Z
 B X"
 
-  def parsed_input() do
+  def parsed_input_part1() do
     String.split(@input, "\n")
     |> Enum.map(fn line ->
       with [opponent_hand, my_hand] = String.split(line, " ") do
         {@opponent_code[opponent_hand], @my_code[my_hand]}
+      end
+    end)
+  end
+
+  def parsed_input_part2() do
+    String.split(@input, "\n")
+    |> Enum.map(fn line ->
+      with [opponent_hand, result] = String.split(line, " ") do
+        {@opponent_code[opponent_hand], @result_code[result]}
       end
     end)
   end
